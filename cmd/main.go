@@ -1,26 +1,25 @@
 package main
 
 import (
-	"net/http"
-	"time"
-
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/gommon/log"
+    "log/slog"
+    "net/http"
+    //    "net/http"
+    //    "time"
+    "url-shortner/controllers/home"
+    "url-shortner/controllers/util"
+    "github.com/go-chi/chi/v5"
+    //    TYPE "url-shortner/model/type"
 )
 
-type CommonResponse struct {
-	Time time.Time
-}
-
 func main() {
-	log.Infof("inside main()")
-	commonResponse := CommonResponse{
-		Time: time.Now(),
-	}
-	e := echo.New()
-	// have new init handler
-	e.GET("/", func(ctx echo.Context) error {
-		return ctx.JSON(http.StatusOK, commonResponse)
-	})
-	e.Logger.Fatal(e.Start(":1323"))
+    slog.Info("inside main :: APP STARTED")
+    //    commonResponse := TYPE.CommonResponse{
+    //        Time: time.Now(),
+    //    }
+    router := chi.NewMux()
+    router.Get("/", util.Main(home.HomeController))
+    err := http.ListenAndServe(":1323", router)
+    if err != nil {
+        slog.Error("inside main :: App can not be served")
+    }
 }
