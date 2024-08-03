@@ -6,7 +6,7 @@ import (
 )
 
 type CommonResponse struct {
-    Time time.Time
+    Time time.Time `json:"time"`
 }
 
 type HTTPHandler func(writer http.ResponseWriter, request *http.Request) error
