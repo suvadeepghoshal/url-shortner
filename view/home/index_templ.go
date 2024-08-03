@@ -43,7 +43,7 @@ func Index(commonResponse TYPE.CommonResponse) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</p>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</p><label for=\"long-url\">Enter your URL</label> <input type=\"text\" id=\"long-url\" name=\"long-url\"> <button id=\"btn-url-submit\" type=\"submit\">Submit</button>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

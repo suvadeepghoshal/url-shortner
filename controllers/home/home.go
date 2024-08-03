@@ -22,7 +22,7 @@ func HomeController(writer http.ResponseWriter, request *http.Request) error {
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-			slog.Error("inside HomeController :: not able to clean up network resources: ", err)
+			slog.Error("inside HomeController :: not able to clean up network resources: ", err.Error())
 		}
 	}(resp.Body)
 
