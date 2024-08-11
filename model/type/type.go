@@ -16,3 +16,9 @@ type UrlParameter struct {
 }
 
 type HTTPHandler func(writer http.ResponseWriter, request *http.Request) error
+
+type Url struct {
+	id       uint   `gorm:"primaryKey"`
+	shortUrl string `gorm:"unique"`
+	longUrl  string
+}

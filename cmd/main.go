@@ -23,6 +23,6 @@ func main() {
 
 	err := http.ListenAndServe(":1323", router)
 	if err != nil {
-		slog.Error("inside main :: App can not be served")
+		slog.Error("inside main :: App can not be served: ", "err", err)
 	}
 }

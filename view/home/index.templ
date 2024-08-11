@@ -1,12 +1,11 @@
-package home    
+package home
 
-import (TYPE "url-shortner/model/type")
-
+import TYPE "url-shortner/model/type"
 
 templ Index(commonResponse TYPE.CommonResponse) {
-    <h1 style="text-align: center;">Welcome to URL shortner</h1>
-    <p><b>Current Time</b> {commonResponse.Time.String()}</p>
-    <label for="long-url">Enter your URL</label>
-    <input type="text" id="long-url" name="long-url" />
-    <button id="btn-url-submit" type="submit">Submit</button>
+<h1 style="text-align: center;">Welcome to URL shortner</h1>
+<p><b>Current Time</b> { commonResponse.Time.String() }</p>
+<label for="long-url">Enter your URL</label>
+<input type="text" id="long-url" name="long-url" />
+<button id="btn-url-submit" type="submit">Submit</button>
 }
