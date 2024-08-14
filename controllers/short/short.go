@@ -34,6 +34,8 @@ func ShortController(writer http.ResponseWriter, request *http.Request) {
 	migErr := dbConn.AutoMigrate(&TYPE.Url{})
 	if migErr != nil {
 		slog.Error("inside short controller :: unable to seed the database: ", "err", migErr.Error())
+	} else {
+		slog.Info("inside Short Controller :: seeding successful")
 	}
 
 	// write the short URL as a response to the user

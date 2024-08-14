@@ -22,9 +22,9 @@ type StringLiteral interface {
 type HTTPHandler func(writer http.ResponseWriter, request *http.Request) error
 
 type Url struct {
-	id        uint   `gorm:"primaryKey"`
-	shortUrl  string `gorm:"unique"`
-	longUrl   string
-	createdAt time.Time `gorm:"default:CURRENT_TIMESTAMP()"`
-	expiry    time.Duration
+	ID        uint   `gorm:"primaryKey"`
+	ShortUrl  string `gorm:"unique"`
+	LongUrl   string
+	CreatedAt time.Time `gorm:"default:CURRENT_TIMESTAMP"`
+	Expiry    time.Duration
 }

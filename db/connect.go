@@ -27,7 +27,6 @@ func ConnectDB() (*gorm.DB, error) {
 			"DB_PORT":     os.Getenv("DB_PORT"),
 		})
 
-	//dsn := "user=postgres password=n dbname=url-shortner-db host=localhost port=5432 sslmode=disable"
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return nil, err
