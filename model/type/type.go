@@ -15,10 +15,16 @@ type UrlParameter struct {
 	LongUrl  string `json:"long_url"`
 }
 
+type StringLiteral interface {
+	Interpolate(template string, variables map[string]string) string
+}
+
 type HTTPHandler func(writer http.ResponseWriter, request *http.Request) error
 
 type Url struct {
-	id       uint   `gorm:"primaryKey"`
-	shortUrl string `gorm:"unique"`
-	longUrl  string
+	id        uint   `gorm:"primaryKey"`
+	shortUrl  string `gorm:"unique"`
+	longUrl   string
+	createdAt time.Time `gorm:"default:CURRENT_TIMESTAMP()"`
+	expiry    time.Duration
 }

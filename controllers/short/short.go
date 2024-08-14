@@ -26,12 +26,12 @@ func ShortController(writer http.ResponseWriter, request *http.Request) {
 	}
 	urlParams.UrlParams.LongUrl = input.LongUrl
 
-	db, conErr := db.ConnectDB()
+	dbConn, conErr := db.ConnectDB()
 	if conErr != nil {
 		slog.Error("inside short controller :: unable to connect to the database: ", "err", conErr.Error())
 	}
 
-	migErr := db.AutoMigrate(&TYPE.Url{})
+	migErr := dbConn.AutoMigrate(&TYPE.Url{})
 	if migErr != nil {
 		slog.Error("inside short controller :: unable to seed the database: ", "err", migErr.Error())
 	}

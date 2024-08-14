@@ -1,19 +1,20 @@
 package main
 
 import (
+	"github.com/go-chi/chi/v5"
 	"log/slog"
 	"net/http"
 	"url-shortner/controllers/api/inity"
 	"url-shortner/controllers/home"
 	"url-shortner/controllers/short"
 	"url-shortner/controllers/util"
-
-	"github.com/go-chi/chi/v5"
 )
 
 func main() {
 	slog.Info("inside main :: APP STARTED")
+
 	router := chi.NewMux()
+
 	// views
 	router.Get("/", util.Main(home.HomeController))
 
