@@ -2,8 +2,10 @@ package main
 
 import (
 	"github.com/go-chi/chi/v5"
+	"github.com/joho/godotenv"
 	"log/slog"
 	"net/http"
+	"os"
 	"url-shortner/controllers/api/inity"
 	"url-shortner/controllers/home"
 	"url-shortner/controllers/short"
@@ -11,7 +13,14 @@ import (
 )
 
 func main() {
+	// TODO: integrate with slogenv
+	slog.SetLogLoggerLevel(slog.LevelDebug)
 	slog.Info("inside main :: APP STARTED")
+
+	envErr := godotenv.Load(".env")
+	if envErr != nil {
+		slog.Error("Error loading env file", "err", envErr)
+	}
 
 	router := chi.NewMux()
 
@@ -22,8 +31,9 @@ func main() {
 	router.Get("/init", inity.InitController)
 	router.Post("/url/short", short.ShortController)
 
-	err := http.ListenAndServe(":1323", router)
+	err := http.ListenAndServe(os.Getenv("APP_PORT"), router)
 	if err != nil {
-		slog.Error("inside main :: App can not be served: ", "err", err)
+		slog.Error("App can not be served", "err", err)
 	}
+
 }

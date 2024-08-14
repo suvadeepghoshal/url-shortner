@@ -17,6 +17,6 @@ func InitController(writer http.ResponseWriter, _ *http.Request) {
 	writer.WriteHeader(http.StatusOK)
 	err := json.NewEncoder(writer).Encode(commonResponse)
 	if err != nil {
-		slog.Error("inside init controller :: unable to write response: ", "err", err.Error())
+		slog.Error("Unable to write response: ", "err", err.Error())
 	}
 }

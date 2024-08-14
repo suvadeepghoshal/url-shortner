@@ -18,3 +18,10 @@ Track the number of times each short URL is accessed.
 - Create HTML templates for inputting and displaying URLs.
 - Implement the logic for generating and resolving short URLs.
 - Track and log URL access events.
+
+### Need to Do:
+- [ ] Session Management
+- [ ] User Auth
+- [ ] HTMX integration
+- [ ] Tailwind integration
+- [ ] Short URL Logic completion
