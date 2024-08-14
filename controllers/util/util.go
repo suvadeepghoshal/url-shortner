@@ -8,6 +8,11 @@ import (
 	TYPE "url-shortner/model/type"
 )
 
+const (
+	base         uint64 = 62
+	characterSet        = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+)
+
 func Render(writer http.ResponseWriter, request *http.Request, componentContext templ.Component) error {
 	return componentContext.Render(request.Context(), writer)
 }
@@ -29,4 +34,21 @@ func (si StringInterpolator) Interpolate(template string, variables map[string]s
 		return variables[ph]
 	}
 	return os.Expand(template, f)
+}
+
+func ToBase62(num uint64) string {
+	encoded := ""
+	for num > 0 {
+		r := num % base
+		num = num / base
+		encoded += string(characterSet[r])
+	}
+	return encoded
+}
+
+func PadLeft(str, pad string, length int) string {
+	for len(str) < length {
+		str = pad + str
+	}
+	return str
 }
