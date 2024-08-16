@@ -2,81 +2,79 @@ package short
 
 import (
 	"encoding/json"
-	"github.com/go-playground/validator/v10"
 	"log/slog"
 	"math/rand"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+	"url-shortner/controllers"
 	"url-shortner/controllers/util"
 	"url-shortner/db"
 	TYPE "url-shortner/model/type"
 )
 
-var validate *validator.Validate
+func ShortController(ctx *controllers.ControllerContext) http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		slog.Info("inside ShortController")
 
-func ShortController(writer http.ResponseWriter, request *http.Request) {
-	slog.Info("inside ShortController")
+		urlParams := TYPE.CommonResponse{
+			Time:      time.Now(),
+			UrlParams: TYPE.UrlParameter{},
+		}
 
-	validate = validator.New()
+		var input TYPE.UrlParameter
+		reqParseErr := json.NewDecoder(request.Body).Decode(&input)
+		if reqParseErr != nil {
+			slog.Error("Unable to parse request body", "err", reqParseErr.Error())
+			http.Error(writer, "Unable to parse request body", http.StatusBadRequest)
+			return
+		}
 
-	urlParams := TYPE.CommonResponse{
-		Time:      time.Now(),
-		UrlParams: TYPE.UrlParameter{},
-	}
+		if valErr := ctx.Validator.Struct(input); valErr != nil {
+			slog.Error("Valid long_url is required in the request", "err", valErr.Error())
+			http.Error(writer, "Valid long_url is required in the request", http.StatusBadRequest)
+			return
+		}
 
-	var input TYPE.UrlParameter
-	reqParseErr := json.NewDecoder(request.Body).Decode(&input)
-	if reqParseErr != nil {
-		slog.Error("Unable to parse request body", "err", reqParseErr.Error())
-		http.Error(writer, "Unable to parse request body", http.StatusBadRequest)
-		return
-	}
+		longUrl := input.LongUrl
 
-	if valErr := validate.Struct(input); valErr != nil {
-		slog.Error("Valid long_url is required in the request", "err", valErr.Error())
-		http.Error(writer, "Valid long_url is required in the request", http.StatusBadRequest)
-		return
-	}
+		// TODO: may be get the connection and seeding done at start of the application, when the user is in '/' route
+		dbConn, conErr := db.ConnectDB()
+		if conErr != nil {
+			slog.Error("Unable to connect to the database: ", "err", conErr.Error())
+			http.Error(writer, "Unable to connect to the database", http.StatusInternalServerError)
+			return
+		}
 
-	longUrl := input.LongUrl
+		migErr := dbConn.AutoMigrate(&TYPE.Url{})
+		if migErr != nil {
+			slog.Error("Unable to seed the database: ", "err", migErr.Error())
+			http.Error(writer, "Unable to seed the database", http.StatusInternalServerError)
+			return
+		} else {
+			slog.Info("Database seeding successful")
+		}
 
-	// TODO: may be get the connection and seeding done at start of the application, when the user is in '/' route
-	dbConn, conErr := db.ConnectDB()
-	if conErr != nil {
-		slog.Error("Unable to connect to the database: ", "err", conErr.Error())
-		http.Error(writer, "Unable to connect to the database", http.StatusInternalServerError)
-		return
-	}
+		shortUrl, e := getShortUrl(longUrl)
+		if e != nil {
+			slog.Error("Unable to get short url", "err", e.Error())
+			http.Error(writer, "Unable to get short url", http.StatusInternalServerError)
+			return
+		}
+		slog.Info("ShortController", "short_url_length", len(shortUrl))
 
-	migErr := dbConn.AutoMigrate(&TYPE.Url{})
-	if migErr != nil {
-		slog.Error("Unable to seed the database: ", "err", migErr.Error())
-		http.Error(writer, "Unable to seed the database", http.StatusInternalServerError)
-		return
-	} else {
-		slog.Info("Database seeding successful")
-	}
+		urlParams.UrlParams.ShortUrl = shortUrl
+		urlParams.UrlParams.LongUrl = longUrl
 
-	shortUrl, e := getShortUrl(longUrl)
-	if e != nil {
-		slog.Error("Unable to get short url", "err", e.Error())
-		http.Error(writer, "Unable to get short url", http.StatusInternalServerError)
-		return
-	}
-	slog.Info("ShortController", "short_url_length", len(shortUrl))
-
-	urlParams.UrlParams.ShortUrl = shortUrl
-	urlParams.UrlParams.LongUrl = longUrl
-
-	writer.Header().Set("Content-Type", "application/json")
-	writer.WriteHeader(http.StatusOK)
-	err := json.NewEncoder(writer).Encode(urlParams)
-	if err != nil {
-		slog.Error("Unable to write response: ", "err", err.Error())
-		http.Error(writer, "Unable to write response", http.StatusInternalServerError)
-		return
+		writer.Header().Set("Content-Type", "application/json")
+		writer.WriteHeader(http.StatusOK)
+		err := json.NewEncoder(writer).Encode(urlParams)
+		if err != nil {
+			slog.Error("Unable to write response: ", "err", err.Error())
+			http.Error(writer, "Unable to write response", http.StatusInternalServerError)
+			return
+		}
 	}
 }
 

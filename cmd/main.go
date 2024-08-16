@@ -3,10 +3,12 @@ package main
 import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
 	"log/slog"
 	"net/http"
 	"os"
+	"url-shortner/controllers"
 	"url-shortner/controllers/api/inity"
 	"url-shortner/controllers/home"
 	"url-shortner/controllers/short"
@@ -17,6 +19,13 @@ func main() {
 	// TODO: integrate with slogenv
 	slog.SetLogLoggerLevel(slog.LevelDebug)
 	slog.Info("inside main :: APP STARTED")
+
+	validate := validator.New()
+
+	// Initialize Contexts required by the Controllers
+	ctx := &controllers.ControllerContext{
+		Validator: validate,
+	}
 
 	envErr := godotenv.Load(".env")
 	if envErr != nil {
@@ -34,8 +43,8 @@ func main() {
 	router.Get("/", util.Main(home.HomeController))
 
 	// API routes
-	router.Get("/init", inity.InitController)
-	router.Post("/url/short", short.ShortController)
+	router.Get("/init", inity.InitController(ctx))
+	router.Post("/url/short", short.ShortController(ctx))
 
 	err := http.ListenAndServe(os.Getenv("APP_PORT"), router)
 	if err != nil {
