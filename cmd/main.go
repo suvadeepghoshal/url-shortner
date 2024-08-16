@@ -44,7 +44,7 @@ func main() {
 
 	// API routes
 	router.Get("/init", inity.InitController(ctx))
-	router.Post("/url/short", short.ShortController(ctx))
+	router.Post("/url/short", short.UrlController(ctx))
 
 	err := http.ListenAndServe(os.Getenv("APP_PORT"), router)
 	if err != nil {

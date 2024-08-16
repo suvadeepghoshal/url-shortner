@@ -14,7 +14,7 @@ import (
 	TYPE "url-shortner/model/type"
 )
 
-func ShortController(ctx *controllers.ControllerContext) http.HandlerFunc {
+func UrlController(ctx *controllers.ControllerContext) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		slog.Info("inside ShortController")
 
