@@ -12,7 +12,7 @@ type CommonResponse struct {
 
 type UrlParameter struct {
 	ShortUrl string `json:"short_url"`
-	LongUrl  string `json:"long_url"`
+	LongUrl  string `json:"long_url" validate:"required,url"`
 }
 
 type StringLiteral interface {

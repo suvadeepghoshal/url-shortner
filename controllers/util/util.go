@@ -45,10 +45,3 @@ func ToBase62(num uint64) string {
 	}
 	return encoded
 }
-
-func PadLeft(str, pad string, length int) string {
-	for len(str) < length {
-		str = pad + str
-	}
-	return str
-}

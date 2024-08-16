@@ -1,11 +1,12 @@
 package short
 
 import (
-	"encoding/hex"
 	"encoding/json"
+	"github.com/go-playground/validator/v10"
 	"log/slog"
+	"math/rand"
 	"net/http"
-	"strconv"
+	"net/url"
 	"strings"
 	"time"
 	"url-shortner/controllers/util"
@@ -13,13 +14,12 @@ import (
 	TYPE "url-shortner/model/type"
 )
 
-const (
-	encodingChunkSize = 2
-	decodingChunkSize = 3
-)
+var validate *validator.Validate
 
 func ShortController(writer http.ResponseWriter, request *http.Request) {
 	slog.Info("inside ShortController")
+
+	validate = validator.New()
 
 	urlParams := TYPE.CommonResponse{
 		Time:      time.Now(),
@@ -30,28 +30,41 @@ func ShortController(writer http.ResponseWriter, request *http.Request) {
 	reqParseErr := json.NewDecoder(request.Body).Decode(&input)
 	if reqParseErr != nil {
 		slog.Error("Unable to parse request body", "err", reqParseErr.Error())
+		http.Error(writer, "Unable to parse request body", http.StatusBadRequest)
+		return
+	}
+
+	if valErr := validate.Struct(input); valErr != nil {
+		slog.Error("Valid long_url is required in the request", "err", valErr.Error())
+		http.Error(writer, "Valid long_url is required in the request", http.StatusBadRequest)
 		return
 	}
 
 	longUrl := input.LongUrl
 
+	// TODO: may be get the connection and seeding done at start of the application, when the user is in '/' route
 	dbConn, conErr := db.ConnectDB()
 	if conErr != nil {
 		slog.Error("Unable to connect to the database: ", "err", conErr.Error())
+		http.Error(writer, "Unable to connect to the database", http.StatusInternalServerError)
+		return
 	}
 
 	migErr := dbConn.AutoMigrate(&TYPE.Url{})
 	if migErr != nil {
 		slog.Error("Unable to seed the database: ", "err", migErr.Error())
+		http.Error(writer, "Unable to seed the database", http.StatusInternalServerError)
+		return
 	} else {
 		slog.Info("Database seeding successful")
 	}
 
 	shortUrl, e := getShortUrl(longUrl)
 	if e != nil {
-		slog.Error("Not able to get short URL: ", "err", e.Error())
+		slog.Error("Unable to get short url", "err", e.Error())
+		http.Error(writer, "Unable to get short url", http.StatusInternalServerError)
+		return
 	}
-
 	slog.Info("ShortController", "short_url_length", len(shortUrl))
 
 	urlParams.UrlParams.ShortUrl = shortUrl
@@ -62,29 +75,22 @@ func ShortController(writer http.ResponseWriter, request *http.Request) {
 	err := json.NewEncoder(writer).Encode(urlParams)
 	if err != nil {
 		slog.Error("Unable to write response: ", "err", err.Error())
+		http.Error(writer, "Unable to write response", http.StatusInternalServerError)
 		return
 	}
 }
 
-func getShortUrl(url string) (string, error) {
-	bytes := []byte(url)
-
-	byteLen := len(bytes)
-
-	slog.Debug("getShortUrl", "url_length", len(url))
-	slog.Debug("getShortUrl", "byte_stream_length", byteLen)
-
-	var strBuilder strings.Builder
-
-	for i := 0; i < byteLen; i += encodingChunkSize {
-		chunk := bytes[i:min(i+encodingChunkSize, byteLen)]
-		hx := hex.EncodeToString(chunk)
-		parseUint, err := strconv.ParseUint(hx, 16, 64)
-		if err != nil {
-			return "", err
-		}
-		s := util.PadLeft(util.ToBase62(parseUint), "0", decodingChunkSize)
-		strBuilder.WriteString(s)
+func getShortUrl(L string) (string, error) {
+	sUrl := util.ToBase62(rand.Uint64())
+	slog.Info("getShortUrl", "s_url", sUrl)
+	parse, err := url.Parse(L)
+	if err != nil {
+		return "", err
 	}
+	prefix := parse.Scheme
+	slog.Debug("getShortUrl", "prefix", prefix)
+	var strBuilder strings.Builder
+	strBuilder.WriteString(prefix + "://")
+	strBuilder.WriteString(strings.ToLower(sUrl))
 	return strBuilder.String(), nil
 }

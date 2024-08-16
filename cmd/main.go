@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/joho/godotenv"
 	"log/slog"
 	"net/http"
@@ -23,6 +24,11 @@ func main() {
 	}
 
 	router := chi.NewMux()
+	router.Use(middleware.Logger)
+	router.Use(middleware.Heartbeat("/ping"))                      // Gives the status of the application
+	router.Use(middleware.AllowContentEncoding("deflate", "gzip")) // AllowContentEncoding enforces a whitelist of request Content-Encoding
+	router.Use(middleware.AllowContentType("application/json"))    // AllowContentType enforces a whitelist of request Content-Types
+	router.Use(middleware.CleanPath)                               // CleanPath middleware will clean out double slash mistakes from a user's request path
 
 	// views
 	router.Get("/", util.Main(home.HomeController))
