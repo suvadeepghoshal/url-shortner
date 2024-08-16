@@ -67,6 +67,19 @@ func UrlController(ctx *controllers.ControllerContext) http.HandlerFunc {
 		urlParams.UrlParams.ShortUrl = shortUrl
 		urlParams.UrlParams.LongUrl = longUrl
 
+		reqObj := TYPE.Url{ShortUrl: urlParams.UrlParams.ShortUrl, LongUrl: urlParams.UrlParams.LongUrl}
+
+		result := dbConn.Create(&reqObj)
+		if result.Error != nil {
+			slog.Error("Unable to store url data in DB", "err", result.Error.Error())
+			http.Error(writer, "Unable to store url in DB", http.StatusInternalServerError)
+			return
+		}
+
+		if result.RowsAffected > 0 {
+			slog.Info("Url data is stored in the DB")
+		}
+
 		writer.Header().Set("Content-Type", "application/json")
 		writer.WriteHeader(http.StatusOK)
 		err := json.NewEncoder(writer).Encode(urlParams)
