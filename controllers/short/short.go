@@ -60,7 +60,7 @@ func UrlController(ctx *controllers.ControllerContext) http.HandlerFunc {
 			return
 		}
 		shortUrl = shortUrl[0:7]
-		slog.Info("ShortController", "short_url", shortUrl)
+		slog.Info("ShortController", "short_url_hash_length", len(shortUrl))
 
 		reqObj := TYPE.Url{ShortUrl: shortUrl[0:7], LongUrl: longUrl}
 
