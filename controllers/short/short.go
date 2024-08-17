@@ -3,9 +3,7 @@ package short
 import (
 	"encoding/json"
 	"log/slog"
-	"math/rand"
 	"net/http"
-	"net/url"
 	"strings"
 	"time"
 	"url-shortner/controllers"
@@ -39,7 +37,6 @@ func UrlController(ctx *controllers.ControllerContext) http.HandlerFunc {
 
 		longUrl := input.LongUrl
 
-		// TODO: may be get the connection and seeding done at start of the application, when the user is in '/' route
 		dbConn, conErr := db.ConnectDB()
 		if conErr != nil {
 			slog.Error("Unable to connect to the database: ", "err", conErr.Error())
@@ -56,29 +53,41 @@ func UrlController(ctx *controllers.ControllerContext) http.HandlerFunc {
 			slog.Info("Database seeding successful")
 		}
 
-		shortUrl, e := getShortUrl(longUrl)
+		shortUrl, e := util.CreateMd5Hash(longUrl)
 		if e != nil {
-			slog.Error("Unable to get short url", "err", e.Error())
-			http.Error(writer, "Unable to get short url", http.StatusInternalServerError)
+			slog.Error("Unable to create short url", "err", e.Error())
+			http.Error(writer, "Unable to create short url", http.StatusInternalServerError)
 			return
 		}
-		slog.Info("ShortController", "short_url_length", len(shortUrl))
+		shortUrl = shortUrl[0:7]
+		slog.Info("ShortController", "short_url", shortUrl)
 
-		urlParams.UrlParams.ShortUrl = shortUrl
-		urlParams.UrlParams.LongUrl = longUrl
-
-		reqObj := TYPE.Url{ShortUrl: urlParams.UrlParams.ShortUrl, LongUrl: urlParams.UrlParams.LongUrl}
+		reqObj := TYPE.Url{ShortUrl: shortUrl[0:7], LongUrl: longUrl}
 
 		result := dbConn.Create(&reqObj)
 		if result.Error != nil {
 			slog.Error("Unable to store url data in DB", "err", result.Error.Error())
-			http.Error(writer, "Unable to store url in DB", http.StatusInternalServerError)
+			if strings.Contains(result.Error.Error(), "duplicate key value violates") {
+				http.Error(writer, "Url already exists", http.StatusConflict)
+			} else {
+				http.Error(writer, "Unable to store url in DB", http.StatusInternalServerError)
+			}
 			return
 		}
 
 		if result.RowsAffected > 0 {
 			slog.Info("Url data is stored in the DB")
 		}
+
+		parsedShortUrl, parseErr := parseShortUrl(longUrl, shortUrl, request)
+		if parseErr != nil {
+			slog.Error("Unable to parse short url", "err", parseErr.Error(), "url", longUrl)
+			http.Error(writer, "Unable to parse short url", http.StatusInternalServerError)
+			return
+		}
+
+		urlParams.UrlParams.ShortUrl = parsedShortUrl
+		urlParams.UrlParams.LongUrl = longUrl
 
 		writer.Header().Set("Content-Type", "application/json")
 		writer.WriteHeader(http.StatusOK)
@@ -91,17 +100,19 @@ func UrlController(ctx *controllers.ControllerContext) http.HandlerFunc {
 	}
 }
 
-func getShortUrl(L string) (string, error) {
-	sUrl := util.ToBase62(rand.Uint64())
-	slog.Info("getShortUrl", "s_url", sUrl)
-	parse, err := url.Parse(L)
-	if err != nil {
-		return "", err
+func parseShortUrl(l, s string, request *http.Request) (string, error) {
+	host := request.Host
+	scheme := "http"
+	if request.TLS != nil {
+		scheme = "https"
 	}
-	prefix := parse.Scheme
-	slog.Debug("getShortUrl", "prefix", prefix)
-	var strBuilder strings.Builder
-	strBuilder.WriteString(prefix + "://")
-	strBuilder.WriteString(strings.ToLower(sUrl))
-	return strBuilder.String(), nil
+	var interpolator TYPE.StringLiteral = util.StringInterpolator{}
+	returnStr := interpolator.Interpolate("${SCHEME}://${HOST}/${SHORT_URL}", map[string]string{
+		"SCHEME":    scheme,
+		"HOST":      host,
+		"SHORT_URL": s,
+	})
+
+	slog.Debug("getShortUrl", "return_str", returnStr)
+	return returnStr, nil
 }

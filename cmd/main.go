@@ -40,6 +40,7 @@ func main() {
 	router.Use(middleware.CleanPath)                               // CleanPath middleware will clean out double slash mistakes from a user's request path
 
 	// views
+	// TODO: remove the views, front end with vue
 	router.Get("/", util.Main(home.HomeController))
 
 	// API routes

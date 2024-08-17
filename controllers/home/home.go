@@ -10,6 +10,7 @@ import (
 	"url-shortner/view/home"
 )
 
+// HomeController TODO: remove this function, as we will not support front end in the future, Read main.go for info
 func HomeController(writer http.ResponseWriter, request *http.Request) error {
 	slog.Info("inside HomeController")
 	resp, err := http.Get("http://localhost:1323/init")

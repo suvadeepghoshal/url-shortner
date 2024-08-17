@@ -1,5 +1,5 @@
 run:
-	@go run cmd/main.go
+	@~/go/bin/wgo run cmd/main.go
 
 build:
 	@go build -o bin/app cmd/main.go

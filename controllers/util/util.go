@@ -1,7 +1,10 @@
 package util
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"github.com/a-h/templ"
+	"io"
 	"log/slog"
 	"net/http"
 	"os"
@@ -36,12 +39,21 @@ func (si StringInterpolator) Interpolate(template string, variables map[string]s
 	return os.Expand(template, f)
 }
 
-func ToBase62(num uint64) string {
-	encoded := ""
-	for num > 0 {
-		r := num % base
-		num = num / base
-		encoded += string(characterSet[r])
+//func ToBase62(num uint64) string {
+//	encoded := ""
+//	for num > 0 {
+//		r := num % base
+//		num = num / base
+//		encoded += string(characterSet[r])
+//	}
+//	return encoded
+//}
+
+func CreateMd5Hash(s string) (string, error) {
+	h := md5.New()
+	_, err := io.WriteString(h, s)
+	if err != nil {
+		return "", err
 	}
-	return encoded
+	return hex.EncodeToString(h.Sum(nil)), nil
 }
