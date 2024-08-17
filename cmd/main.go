@@ -10,9 +10,7 @@ import (
 	"os"
 	"url-shortner/controllers"
 	"url-shortner/controllers/api/inity"
-	"url-shortner/controllers/home"
 	"url-shortner/controllers/short"
-	"url-shortner/controllers/util"
 )
 
 func main() {
@@ -38,10 +36,6 @@ func main() {
 	router.Use(middleware.AllowContentEncoding("deflate", "gzip")) // AllowContentEncoding enforces a whitelist of request Content-Encoding
 	router.Use(middleware.AllowContentType("application/json"))    // AllowContentType enforces a whitelist of request Content-Types
 	router.Use(middleware.CleanPath)                               // CleanPath middleware will clean out double slash mistakes from a user's request path
-
-	// views
-	// TODO: remove the views, front end with vue
-	router.Get("/", util.Main(home.HomeController))
 
 	// API routes
 	router.Get("/init", inity.InitController(ctx))
