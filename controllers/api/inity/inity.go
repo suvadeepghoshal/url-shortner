@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 	"url-shortner/controllers"
+	"url-shortner/controllers/util"
 	"url-shortner/db"
 	TYPE "url-shortner/model/type"
 )
@@ -33,9 +34,7 @@ func InitController(_ *controllers.ControllerContext) http.HandlerFunc {
 			slog.Info("Database seeding successful")
 		}
 
-		if closeErr := genObj.Close(); closeErr != nil {
-			slog.Error("Unable to close the database connection: ", "err", closeErr.Error())
-			http.Error(writer, "Unable to close the database connection", http.StatusInternalServerError)
+		if util.CloseDbConnection(writer, genObj) {
 			return
 		}
 

@@ -40,7 +40,7 @@ func main() {
 
 	// API routes
 	router.Get("/", inity.InitController(ctx))
-	router.Get("/{hash}", redirect.RedirectController)
+	router.Get("/{hash}", redirect.RedirController)
 	router.Post("/url/short", short.UrlController(ctx))
 
 	err := http.ListenAndServe(os.Getenv("APP_PORT"), router)

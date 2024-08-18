@@ -70,13 +70,11 @@ func UrlController(ctx *controllers.ControllerContext) http.HandlerFunc {
 			slog.Info("Url data is stored in the DB")
 		}
 
-		if closeErr := genObj.Close(); closeErr != nil {
-			slog.Error("Unable to close the database connection: ", "err", closeErr.Error())
-			http.Error(writer, "Unable to close the database connection", http.StatusInternalServerError)
+		if util.CloseDbConnection(writer, genObj) {
 			return
 		}
 
-		parsedShortUrl, parseErr := parseShortUrl(longUrl, shortUrl, request)
+		parsedShortUrl, parseErr := util.ParseShortUrl(longUrl, shortUrl, request)
 		if parseErr != nil {
 			slog.Error("Unable to parse short url", "err", parseErr.Error(), "url", longUrl)
 			http.Error(writer, "Unable to parse short url", http.StatusInternalServerError)
@@ -95,21 +93,4 @@ func UrlController(ctx *controllers.ControllerContext) http.HandlerFunc {
 			return
 		}
 	}
-}
-
-func parseShortUrl(l, s string, request *http.Request) (string, error) {
-	host := request.Host
-	scheme := "http"
-	if request.TLS != nil {
-		scheme = "https"
-	}
-	var interpolator TYPE.StringLiteral = util.StringInterpolator{}
-	returnStr := interpolator.Interpolate("${SCHEME}://${HOST}/${SHORT_URL}", map[string]string{
-		"SCHEME":    scheme,
-		"HOST":      host,
-		"SHORT_URL": s,
-	})
-
-	slog.Debug("getShortUrl", "return_str", returnStr)
-	return returnStr, nil
 }

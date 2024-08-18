@@ -2,6 +2,7 @@ package util
 
 import (
 	"crypto/md5"
+	"database/sql"
 	"encoding/hex"
 	"github.com/a-h/templ"
 	"io"
@@ -56,4 +57,30 @@ func CreateMd5Hash(s string) (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(h.Sum(nil)), nil
+}
+
+func CloseDbConnection(w http.ResponseWriter, db *sql.DB) bool {
+	if e := db.Close(); e != nil {
+		slog.Error("Unable to close the database connection: ", "err", e.Error())
+		http.Error(w, "Unable to close the database connection", http.StatusInternalServerError)
+		return true
+	}
+	return false
+}
+
+func ParseShortUrl(l, s string, request *http.Request) (string, error) {
+	host := request.Host
+	scheme := "http"
+	if request.TLS != nil {
+		scheme = "https"
+	}
+	var interpolator TYPE.StringLiteral = StringInterpolator{}
+	returnStr := interpolator.Interpolate("${SCHEME}://${HOST}/${SHORT_URL}", map[string]string{
+		"SCHEME":    scheme,
+		"HOST":      host,
+		"SHORT_URL": s,
+	})
+
+	slog.Debug("ParseShortUrl", "return_str", returnStr)
+	return returnStr, nil
 }
