@@ -10,6 +10,7 @@ import (
 	"os"
 	"url-shortner/controllers"
 	"url-shortner/controllers/api/inity"
+	"url-shortner/controllers/redirect"
 	"url-shortner/controllers/short"
 )
 
@@ -38,7 +39,8 @@ func main() {
 	router.Use(middleware.CleanPath)                               // CleanPath middleware will clean out double slash mistakes from a user's request path
 
 	// API routes
-	router.Get("/init", inity.InitController(ctx))
+	router.Get("/", inity.InitController(ctx))
+	router.Get("/{hash}", redirect.RedirectController)
 	router.Post("/url/short", short.UrlController(ctx))
 
 	err := http.ListenAndServe(os.Getenv("APP_PORT"), router)

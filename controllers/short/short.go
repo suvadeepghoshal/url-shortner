@@ -14,7 +14,7 @@ import (
 
 func UrlController(ctx *controllers.ControllerContext) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
-		slog.Info("inside ShortController")
+		slog.Info("inside UrlController")
 
 		urlParams := TYPE.CommonResponse{
 			Time:      time.Now(),
@@ -37,20 +37,11 @@ func UrlController(ctx *controllers.ControllerContext) http.HandlerFunc {
 
 		longUrl := input.LongUrl
 
-		dbConn, conErr := db.ConnectDB()
+		dbConn, genObj, conErr := db.ConnectDB()
 		if conErr != nil {
 			slog.Error("Unable to connect to the database: ", "err", conErr.Error())
 			http.Error(writer, "Unable to connect to the database", http.StatusInternalServerError)
 			return
-		}
-
-		migErr := dbConn.AutoMigrate(&TYPE.Url{})
-		if migErr != nil {
-			slog.Error("Unable to seed the database: ", "err", migErr.Error())
-			http.Error(writer, "Unable to seed the database", http.StatusInternalServerError)
-			return
-		} else {
-			slog.Info("Database seeding successful")
 		}
 
 		shortUrl, e := util.CreateMd5Hash(longUrl)
@@ -60,7 +51,7 @@ func UrlController(ctx *controllers.ControllerContext) http.HandlerFunc {
 			return
 		}
 		shortUrl = shortUrl[0:7]
-		slog.Info("ShortController", "short_url_hash_length", len(shortUrl))
+		slog.Info("UrlController", "short_url_hash_length", len(shortUrl))
 
 		reqObj := TYPE.Url{ShortUrl: shortUrl[0:7], LongUrl: longUrl}
 
@@ -77,6 +68,12 @@ func UrlController(ctx *controllers.ControllerContext) http.HandlerFunc {
 
 		if result.RowsAffected > 0 {
 			slog.Info("Url data is stored in the DB")
+		}
+
+		if closeErr := genObj.Close(); closeErr != nil {
+			slog.Error("Unable to close the database connection: ", "err", closeErr.Error())
+			http.Error(writer, "Unable to close the database connection", http.StatusInternalServerError)
+			return
 		}
 
 		parsedShortUrl, parseErr := parseShortUrl(longUrl, shortUrl, request)
