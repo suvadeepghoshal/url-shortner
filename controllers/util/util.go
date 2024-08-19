@@ -12,10 +12,10 @@ import (
 	TYPE "url-shortner/model/type"
 )
 
-const (
-	base         uint64 = 62
-	characterSet        = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-)
+//const (
+//	base         uint64 = 62
+//	characterSet        = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+//)
 
 func Render(writer http.ResponseWriter, request *http.Request, componentContext templ.Component) error {
 	return componentContext.Render(request.Context(), writer)
