@@ -7,55 +7,80 @@ import (
 	"gorm.io/gorm"
 	"log/slog"
 	"net/http"
+	"url-shortner/controllers"
 	"url-shortner/controllers/util"
 	"url-shortner/db"
 	TYPE "url-shortner/model/type"
 )
 
-func RedirController(writer http.ResponseWriter, request *http.Request) {
-	slog.Info("inside RedirController")
+func RedirController(_ *controllers.ControllerContext) http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
 
-	var url TYPE.Url
+		slog.Info("inside RedirController")
 
-	hash := chi.URLParam(request, "hash")
+		var url TYPE.Url
 
-	dbConn, genObj, conErr := db.ConnectDB()
-	if conErr != nil {
-		slog.Error("Unable to connect to the database: ", "err", conErr.Error())
-		http.Error(writer, "Unable to connect to the database", http.StatusInternalServerError)
-		return
-	}
+		hash := chi.URLParam(request, "hash")
 
-	if e := dbConn.Where("short_url = ?", hash).First(&url).Error; e != nil {
-		slog.Error("Unable to find the url", "hash", hash, "err", e.Error())
-		if errors.Is(e, gorm.ErrRecordNotFound) {
-			http.Error(writer, "url not found", http.StatusNotFound)
+		pgDbConfig, configErr := db.LoadPgDbConfig()
+		if configErr != nil {
+			slog.Error("Unable to load pgDbConfig", "configErr", configErr)
+			http.Error(writer, configErr.Error(), http.StatusInternalServerError)
 			return
 		}
-		http.Error(writer, "Something went wrong, Please try again", http.StatusInternalServerError)
-		return
-	}
 
-	if len(url.LongUrl) != 0 {
-		slog.Info("RedirController found the url", "hash", hash, "short_url_len", len(url.ShortUrl), "long_url_len", len(url.LongUrl))
-	}
+		pgDriver := db.PsqlDataBase{DbParams: pgDbConfig}
 
-	if util.CloseDbConnection(writer, genObj) {
-		return
-	}
+		dbConn, conErr := pgDriver.Connection()
+		if conErr != nil {
+			slog.Error("Unable to connect to the database: ", "err", conErr.Error())
+			http.Error(writer, "Unable to connect to the database", http.StatusInternalServerError)
+			return
+		}
 
-	parsedShortUrl, parseErr := util.ParseShortUrl(url.LongUrl, url.ShortUrl, request)
-	if parseErr != nil {
-		slog.Error("Unable to parse the short url", "err", parseErr.Error())
-	}
-	url.ShortUrl = parsedShortUrl
+		if e := dbConn.Where("short_url = ?", hash).First(&url).Error; e != nil {
+			slog.Error("Unable to find the url", "hash", hash, "err", e.Error())
+			if errors.Is(e, gorm.ErrRecordNotFound) {
+				http.Error(writer, "url not found", http.StatusNotFound)
+				return
+			}
+			http.Error(writer, "Something went wrong, Please try again", http.StatusInternalServerError)
+			return
+		}
 
-	writer.Header().Set("Content-Type", "application/json")
-	writer.WriteHeader(http.StatusOK)
-	err := json.NewEncoder(writer).Encode(url)
-	if err != nil {
-		slog.Error("Unable to write response: ", "err", err.Error())
-		http.Error(writer, "Unable to write response", http.StatusInternalServerError)
-		return
+		if len(url.LongUrl) != 0 {
+			slog.Info("RedirController found the url", "hash", hash, "short_url_len", len(url.ShortUrl), "long_url_len", len(url.LongUrl))
+		}
+
+		curr := db.GormDB{
+			Gorm: dbConn,
+		}
+
+		// TODO: It is rare to Close a DB, as the DB handle is meant to be long-lived and shared between many goroutines. It makes sense to close the connection once one user session ends or expires?
+		genDB, genErr := curr.GenDB()
+		if genErr != nil {
+			slog.Error("Unable to generate the generic database instance", "genErr", genErr)
+			http.Error(writer, "Unable to generate the generic database instance", http.StatusInternalServerError)
+			return
+		}
+
+		if util.CloseDbConnection(writer, genDB) {
+			return
+		}
+
+		parsedShortUrl, parseErr := util.ParseShortUrl(url.LongUrl, url.ShortUrl, request)
+		if parseErr != nil {
+			slog.Error("Unable to parse the short url", "err", parseErr.Error())
+		}
+		url.ShortUrl = parsedShortUrl
+
+		writer.Header().Set("Content-Type", "application/json")
+		writer.WriteHeader(http.StatusOK)
+		err := json.NewEncoder(writer).Encode(url)
+		if err != nil {
+			slog.Error("Unable to write response: ", "err", err.Error())
+			http.Error(writer, "Unable to write response", http.StatusInternalServerError)
+			return
+		}
 	}
 }

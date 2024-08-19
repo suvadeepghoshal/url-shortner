@@ -1,6 +1,7 @@
 package model
 
 import (
+	"gorm.io/gorm"
 	"net/http"
 	"time"
 )
@@ -17,6 +18,17 @@ type UrlParameter struct {
 
 type StringLiteral interface {
 	Interpolate(template string, variables map[string]string) string
+}
+
+type DBDriver interface {
+	Connection() (*gorm.DB, error)
+}
+type DbParams struct {
+	DbName     string
+	DbUsername string
+	DbPassword string
+	DbHost     string
+	DbPort     string
 }
 
 type HTTPHandler func(writer http.ResponseWriter, request *http.Request) error

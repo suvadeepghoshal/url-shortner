@@ -37,7 +37,15 @@ func UrlController(ctx *controllers.ControllerContext) http.HandlerFunc {
 
 		longUrl := input.LongUrl
 
-		dbConn, genObj, conErr := db.ConnectDB()
+		pgDbConfig, configErr := db.LoadPgDbConfig()
+		if configErr != nil {
+			slog.Error("Unable to load pgDbConfig", "configErr", configErr)
+			http.Error(writer, configErr.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		pgDriver := db.PsqlDataBase{DbParams: pgDbConfig}
+		dbConn, conErr := pgDriver.Connection()
 		if conErr != nil {
 			slog.Error("Unable to connect to the database: ", "err", conErr.Error())
 			http.Error(writer, "Unable to connect to the database", http.StatusInternalServerError)
@@ -70,7 +78,19 @@ func UrlController(ctx *controllers.ControllerContext) http.HandlerFunc {
 			slog.Info("Url data is stored in the DB")
 		}
 
-		if util.CloseDbConnection(writer, genObj) {
+		curr := db.GormDB{
+			Gorm: dbConn,
+		}
+
+		// TODO: It is rare to Close a DB, as the DB handle is meant to be long-lived and shared between many goroutines. It makes sense to close the connection once one user session ends or expires?
+		genDB, genErr := curr.GenDB()
+		if genErr != nil {
+			slog.Error("Unable to generate the generic database instance", "genErr", genErr)
+			http.Error(writer, "Unable to generate the generic database instance", http.StatusInternalServerError)
+			return
+		}
+
+		if util.CloseDbConnection(writer, genDB) {
 			return
 		}
 

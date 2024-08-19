@@ -21,14 +21,15 @@ func main() {
 
 	validate := validator.New()
 
-	// Initialize Contexts required by the Controllers
-	ctx := &controllers.ControllerContext{
-		Validator: validate,
-	}
-
 	envErr := godotenv.Load(".env")
 	if envErr != nil {
 		slog.Error("Error loading env file", "err", envErr)
+		return
+	}
+
+	// Initialize Contexts required by the Controllers
+	ctx := &controllers.ControllerContext{
+		Validator: validate,
 	}
 
 	router := chi.NewMux()
@@ -40,7 +41,7 @@ func main() {
 
 	// API routes
 	router.Get("/", inity.InitController(ctx))
-	router.Get("/{hash}", redirect.RedirController)
+	router.Get("/{hash}", redirect.RedirController(ctx))
 	router.Post("/url/short", short.UrlController(ctx))
 
 	err := http.ListenAndServe(os.Getenv("APP_PORT"), router)
