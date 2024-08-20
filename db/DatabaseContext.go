@@ -19,6 +19,7 @@ type GormDB struct {
 
 // LoadPgDbConfig Load multiple DB configs based on requirements
 func LoadPgDbConfig() (model.DbParams, error) {
+	// TODO: check if we can get the godotenv as a shared state available globally
 	envErr := godotenv.Load(".env")
 	if envErr != nil {
 		slog.Error("Error loading env file", "err", envErr)

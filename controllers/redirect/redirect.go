@@ -1,7 +1,6 @@
 package redirect
 
 import (
-	"encoding/json"
 	"errors"
 	"github.com/go-chi/chi/v5"
 	"gorm.io/gorm"
@@ -74,13 +73,15 @@ func RedirController(_ *controllers.ControllerContext) http.HandlerFunc {
 		}
 		url.ShortUrl = parsedShortUrl
 
-		writer.Header().Set("Content-Type", "application/json")
-		writer.WriteHeader(http.StatusOK)
-		err := json.NewEncoder(writer).Encode(url)
-		if err != nil {
-			slog.Error("Unable to write response: ", "err", err.Error())
-			http.Error(writer, "Unable to write response", http.StatusInternalServerError)
-			return
-		}
+		// Giving permanent redirect to the user. Once the user clicks on the short URL, it will automatically take the user to the actual URL
+		writer.Header().Set("Location", url.LongUrl)
+		//writer.Header().Set("Content-Type", "application/json")
+		writer.WriteHeader(http.StatusMovedPermanently)
+		//err := json.NewEncoder(writer).Encode(url)
+		//if err != nil {
+		//	slog.Error("Unable to write response: ", "err", err.Error())
+		//	http.Error(writer, "Unable to write response", http.StatusInternalServerError)
+		//	return
+		//}
 	}
 }

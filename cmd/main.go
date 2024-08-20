@@ -21,6 +21,7 @@ func main() {
 
 	validate := validator.New()
 
+	// TODO: Check if the godotenv can be load once in the main and shared across as a state
 	envErr := godotenv.Load(".env")
 	if envErr != nil {
 		slog.Error("Error loading env file", "err", envErr)
