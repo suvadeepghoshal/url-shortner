@@ -22,6 +22,5 @@ Track the number of times each short URL is accessed.
 ### Need to Do:
 - [ ] Session Management
 - [ ] User Auth
-- [ ] HTMX integration
-- [ ] Tailwind integration
-- [ ] Short URL Logic completion
+- [X] Short URL Logic completion
+- [X] Long URL extraction and redirection
