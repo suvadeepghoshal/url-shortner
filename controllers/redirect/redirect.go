@@ -67,11 +67,11 @@ func RedirController(_ *controllers.ControllerContext) http.HandlerFunc {
 			return
 		}
 
-		parsedShortUrl, parseErr := util.ParseShortUrl(url.LongUrl, url.ShortUrl, request)
-		if parseErr != nil {
-			slog.Error("Unable to parse the short url", "err", parseErr.Error())
-		}
-		url.ShortUrl = parsedShortUrl
+		//parsedShortUrl, parseErr := util.ParseShortUrl(url.LongUrl, url.ShortUrl, request)
+		//if parseErr != nil {
+		//	slog.Error("Unable to parse the short url", "err", parseErr.Error())
+		//}
+		//url.ShortUrl = parsedShortUrl
 
 		// Giving permanent redirect to the user. Once the user clicks on the short URL, it will automatically take the user to the actual URL
 		writer.Header().Set("Location", url.LongUrl)
