@@ -12,6 +12,7 @@ import (
 	model "url-shortner/model/type"
 )
 
+// TODO: needs to be removed after figuring out how to sort the connecion pool to the existing configuration
 func ConnectDB() (*gorm.DB, *sql.DB, error) {
 	envErr := godotenv.Load(".env")
 	if envErr != nil {

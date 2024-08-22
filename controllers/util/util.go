@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"database/sql"
 	"encoding/hex"
+	"fmt"
 	"github.com/a-h/templ"
 	"io"
 	"log/slog"
@@ -68,17 +69,23 @@ func CloseDbConnection(w http.ResponseWriter, db *sql.DB) bool {
 	}
 	return false
 }
+func GetCurrDomain(r *http.Request) string {
 
-func ParseShortUrl(l, s string, request *http.Request) (string, error) {
-	host := request.Host
+	host := r.Host
 	scheme := "http"
-	if request.TLS != nil {
+	if r.TLS != nil {
 		scheme = "https"
 	}
+	return fmt.Sprintf("%s://%s", scheme, host)
+}
+
+func ParseShortUrl(l, s string, request *http.Request) (string, error) {
+	hostname := GetCurrDomain(request)
+	slog.Debug("ParseShortController", "hostname", hostname)
+	slog.Debug("ParseShortController", "short_url", s)
 	var interpolator TYPE.StringLiteral = StringInterpolator{}
-	returnStr := interpolator.Interpolate("${SCHEME}://${HOST}/${SHORT_URL}", map[string]string{
-		"SCHEME":    scheme,
-		"HOST":      host,
+	returnStr := interpolator.Interpolate("${HOST_NAME}/${SHORT_URL}", map[string]string{
+		"HOST_NAME": hostname,
 		"SHORT_URL": s,
 	})
 

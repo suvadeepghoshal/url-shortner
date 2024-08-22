@@ -1,17 +1,19 @@
 package main
 
 import (
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-	"github.com/go-playground/validator/v10"
-	"github.com/joho/godotenv"
 	"log/slog"
 	"net/http"
 	"os"
 	"url-shortner/controllers"
 	"url-shortner/controllers/api/inity"
+	"url-shortner/controllers/auth/provider/google_prov"
 	"url-shortner/controllers/redirect"
 	"url-shortner/controllers/short"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-playground/validator/v10"
+	"github.com/joho/godotenv"
 )
 
 func main() {
@@ -44,6 +46,7 @@ func main() {
 	router.Get("/", inity.InitController(ctx))
 	router.Get("/{hash}", redirect.RedirController(ctx))
 	router.Post("/url/short", short.UrlController(ctx))
+	router.Get("/auth", google_prov.HandleGoogleAuth)
 
 	err := http.ListenAndServe(os.Getenv("APP_PORT"), router)
 	if err != nil {
