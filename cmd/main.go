@@ -47,6 +47,7 @@ func main() {
 	router.Get("/{hash}", redirect.RedirController(ctx))
 	router.Post("/url/short", short.UrlController(ctx))
 	router.Get("/auth", google_prov.HandleGoogleAuth)
+	router.Get("/auth/callback", google_prov.HandleGoogleAuthCallBack)
 
 	err := http.ListenAndServe(os.Getenv("APP_PORT"), router)
 	if err != nil {

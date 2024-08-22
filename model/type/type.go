@@ -40,3 +40,10 @@ type Url struct {
 	CreatedAt time.Time `gorm:"default:CURRENT_TIMESTAMP"`
 	Expiry    time.Duration
 }
+
+type User struct {
+	ID            string
+	Email         string
+	Picture       string
+	VerifiedEmail bool
+}
