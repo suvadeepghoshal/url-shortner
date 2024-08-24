@@ -2,13 +2,15 @@ package util
 
 import (
 	"crypto/md5"
+	"crypto/rand"
 	"database/sql"
 	"encoding/hex"
 	"fmt"
-	"github.com/a-h/templ"
 	"io"
 	"log/slog"
 	"net/http"
+
+	"github.com/a-h/templ"
 
 	"os"
 	TYPE "url-shortner/model/type"
@@ -91,4 +93,14 @@ func ParseShortUrl(l, s string, request *http.Request) (string, error) {
 
 	slog.Debug("ParseShortUrl", "return_str", returnStr)
 	return returnStr, nil
+}
+
+func GenerateSessionSecret(length int) (string, error) {
+	secret := make([]byte, length) // creates a byte slice called secret with length number of elements. Each element is initialized to zero (0x00).
+
+	if _, e := rand.Read(secret); e != nil {
+		return "", e
+	}
+
+	return hex.EncodeToString(secret), nil
 }

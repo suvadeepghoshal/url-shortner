@@ -9,6 +9,10 @@ import (
 	"url-shortner/controllers/util"
 	"url-shortner/db"
 	TYPE "url-shortner/model/type"
+
+	"github.com/gorilla/sessions"
+	"github.com/joho/godotenv"
+	"github.com/markbates/goth/gothic"
 )
 
 func InitController(_ *controllers.ControllerContext) http.HandlerFunc {
@@ -37,6 +41,22 @@ func InitController(_ *controllers.ControllerContext) http.HandlerFunc {
 		if util.CloseDbConnection(writer, genObj) {
 			return
 		}
+
+		// TODO: make the secret for the session and store in the env
+		secret, e := util.GenerateSessionSecret(32)
+		if e != nil {
+			slog.Error("Unable to generate session secret", "err", e)
+		}
+
+		// TODO: Check if the godotenv can be load once in the main and shared across as a state
+		envErr := godotenv.Load(".env")
+		if envErr != nil {
+			slog.Error("Error loading env file", "err", envErr)
+			return
+		}
+
+		store := sessions.NewCookieStore([]byte(secret))
+		gothic.Store = store
 
 		writer.Header().Set("Content-Type", "application/json")
 		writer.WriteHeader(http.StatusOK)
