@@ -30,6 +30,7 @@ func InitController(_ *controllers.ControllerContext) http.HandlerFunc {
 		}
 
 		// Seeding Database at init
+		// TODO: may be seed only if tables are not found
 		if migErr := dbConn.AutoMigrate(&TYPE.Url{}); migErr != nil {
 			slog.Error("Unable to seed the database: ", "err", migErr.Error())
 			http.Error(writer, "Unable to seed the database", http.StatusInternalServerError)
@@ -42,7 +43,6 @@ func InitController(_ *controllers.ControllerContext) http.HandlerFunc {
 			return
 		}
 
-		// TODO: make the secret for the session and store in the env
 		secret, e := util.GenerateSessionSecret(32)
 		if e != nil {
 			slog.Error("Unable to generate session secret", "err", e)
@@ -55,6 +55,7 @@ func InitController(_ *controllers.ControllerContext) http.HandlerFunc {
 			return
 		}
 
+		// creating a new store to hold protected resources after auth
 		store := sessions.NewCookieStore([]byte(secret))
 		gothic.Store = store
 
