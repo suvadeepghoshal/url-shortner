@@ -46,11 +46,15 @@ func HandleGoogleAuthCallBack(w http.ResponseWriter, r *http.Request) {
 	resp, err := gothic.CompleteUserAuth(w, r)
 	if err != nil {
 		slog.Error("Unable to get context from auth provider", "err", err)
+		return
 	}
+
+	// do we need a pointer? not setting any data just creating an user object to store val in session. Might need if we consider to store the entire user is session and then modify from somewhere else
+	var authedUser model.User
 
 	if resp.RawData != nil {
 		m := resp.RawData
-		authedUser := model.User{
+		authedUser = model.User{
 			ID:            m["id"].(string),
 			Email:         m["email"].(string),
 			Picture:       m["picture"].(string),
@@ -65,13 +69,29 @@ func HandleGoogleAuthCallBack(w http.ResponseWriter, r *http.Request) {
 		session, sErr := gothic.Store.Get(r, "auth-session")
 		if sErr != nil {
 			slog.Error("Unable to generate auth session", "sErr", sErr)
+			return
 		}
 
 		session.Values["access_token"] = resp.AccessToken
 		session.Values["refresh_token"] = resp.RefreshToken
 		session.Values["expires_at"] = resp.ExpiresAt
 		session.Values["user_authed"] = authedUser.VerifiedEmail
+		err := session.Save(r, w)
+		if err != nil {
+			slog.Error("Unable to save the session", "err", err)
+			return
+		}
 
-		slog.Debug("HandleGooleAuthCallBack", "session", session)
+		slog.Debug("HandleGoogleAuthCallBack", "session", session)
+
 	}
+
+	//w.Header().Set("Content-Type", "application/json")
+	//w.WriteHeader(http.StatusOK)
+	//encErr := json.NewEncoder(w).Encode(fmt.Sprintf("%s is successfully logged in!", authedUser.Email))
+	//if encErr != nil {
+	//	slog.Error("Unable to write response", "err", encErr.Error())
+	//	http.Error(w, "Unable to write response", http.StatusInternalServerError)
+	//	return
+	//}
 }

@@ -45,6 +45,7 @@ func main() {
 	// API routes
 	router.Get("/", inity.InitController(ctx))
 	router.Get("/{hash}", redirect.RedirController(ctx))
+	// router.With(RejectAuthPrefixMiddleware).Get("/{hash}", redirect.RedirController(ctx))
 	router.Post("/url/short", short.UrlController(ctx))
 	router.Get("/auth", google_prov.HandleGoogleAuth)
 	router.Get("/auth/callback", google_prov.HandleGoogleAuthCallBack)
@@ -54,4 +55,17 @@ func main() {
 		slog.Error("App can not be served", "err", err)
 	}
 
+}
+
+func RejectAuthPrefixMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hash := chi.URLParam(r, "hash")
+
+		if len(hash) >= 4 && hash[0:4] == "auth" {
+			http.Error(w, "Not a valid short URL", http.StatusNotFound)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }
