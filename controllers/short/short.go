@@ -14,7 +14,8 @@ import (
 
 func UrlController(ctx *controllers.ControllerContext) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
-		slog.Info("inside UrlController")
+		//reqId := request.Context().Value("req_id").(string)
+		//slog.Info("UrlController", "reqId", reqId)
 
 		urlParams := TYPE.CommonResponse{
 			Time:      time.Now(),

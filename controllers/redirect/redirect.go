@@ -10,29 +10,14 @@ import (
 	TYPE "url-shortner/model/type"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/markbates/goth/gothic"
 	"gorm.io/gorm"
 )
 
 func RedirController(_ *controllers.ControllerContext) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 
-		slog.Info("inside RedirController")
-
-		session, sErr := gothic.Store.Get(request, "auth-session")
-		if sErr != nil {
-			slog.Error("Unable to get auth session", "sErr", sErr)
-			http.Error(writer, sErr.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		slog.Debug("RedirController", "session", session)
-		ua := session.Values["user_authed"]
-		if ua == nil || ua != nil && !ua.(bool) {
-			slog.Error("User is not authenticated")
-			http.Error(writer, "Forbidden", http.StatusForbidden)
-			return
-		}
+		//redId := request.Context().Value("red_id").(string)
+		//slog.Info("RedirController", "reqId", redId)
 
 		var url TYPE.Url
 

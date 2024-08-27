@@ -1,6 +1,10 @@
 package main
 
 import (
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-playground/validator/v10"
+	"github.com/joho/godotenv"
 	"log/slog"
 	"net/http"
 	"os"
@@ -9,11 +13,6 @@ import (
 	"url-shortner/controllers/auth/provider/google_prov"
 	"url-shortner/controllers/redirect"
 	"url-shortner/controllers/short"
-
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-	"github.com/go-playground/validator/v10"
-	"github.com/joho/godotenv"
 )
 
 func main() {
@@ -44,11 +43,11 @@ func main() {
 
 	// API routes
 	router.Get("/", inity.InitController(ctx))
-	router.Get("/{hash}", redirect.RedirController(ctx))
-	// router.With(RejectAuthPrefixMiddleware).Get("/{hash}", redirect.RedirController(ctx))
-	router.Post("/url/short", short.UrlController(ctx))
 	router.Get("/auth", google_prov.HandleGoogleAuth)
 	router.Get("/auth/callback", google_prov.HandleGoogleAuthCallBack)
+	router.With(controllers.ProtectedResourceMiddleware).Post("/url/short", short.UrlController(ctx))
+	router.With(controllers.ProtectedResourceMiddleware).Get("/{hash}", redirect.RedirController(ctx))
+	// router.With(RejectAuthPrefixMiddleware).Get("/{hash}", redirect.RedirController(ctx))
 
 	err := http.ListenAndServe(os.Getenv("APP_PORT"), router)
 	if err != nil {
@@ -60,7 +59,6 @@ func main() {
 func RejectAuthPrefixMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		hash := chi.URLParam(r, "hash")
-
 		if len(hash) >= 4 && hash[0:4] == "auth" {
 			http.Error(w, "Not a valid short URL", http.StatusNotFound)
 			return
