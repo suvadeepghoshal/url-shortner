@@ -15,9 +15,7 @@ import (
 
 func RedirController(_ *controllers.ControllerContext) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
-
-		//redId := request.Context().Value("red_id").(string)
-		//slog.Info("RedirController", "reqId", redId)
+		slog.Info("RedirController", "req_id", request.Context().Value("req_id"))
 
 		var url TYPE.Url
 
