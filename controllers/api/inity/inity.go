@@ -41,12 +41,16 @@ func InitController(_ *controllers.ControllerContext) http.HandlerFunc {
 
 		// Seeding Database at init
 		// TODO: may be seed only if tables are not found
-		if migErr := dbConn.AutoMigrate(&TYPE.Url{}); migErr != nil {
-			slog.Error("Unable to seed the database: ", "err", migErr.Error())
-			http.Error(writer, "Unable to seed the database", http.StatusInternalServerError)
-			return
+		if !dbConn.Migrator().HasTable(&TYPE.Url{}) {
+			if migErr := dbConn.AutoMigrate(&TYPE.Url{}); migErr != nil {
+				slog.Error("Unable to seed the database: ", "err", migErr.Error())
+				http.Error(writer, "Unable to seed the database", http.StatusInternalServerError)
+				return
+			} else {
+				slog.Info("Database migration successful")
+			}
 		} else {
-			slog.Info("Database seeding successful")
+			slog.Info("Database Migration already exists")
 		}
 
 		curr := db.GormDB{

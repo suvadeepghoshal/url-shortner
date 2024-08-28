@@ -1,7 +1,6 @@
 package model
 
 import (
-	"gorm.io/gorm"
 	"net/http"
 	"time"
 )
@@ -20,9 +19,6 @@ type StringLiteral interface {
 	Interpolate(template string, variables map[string]string) string
 }
 
-type DBDriver interface {
-	Connection() (*gorm.DB, error)
-}
 type DbParams struct {
 	DbName     string
 	DbUsername string
@@ -31,6 +27,7 @@ type DbParams struct {
 	DbPort     string
 }
 
+// HTTPHandler TODO: shall we move it to util.go to sync? (abstract func)
 type HTTPHandler func(writer http.ResponseWriter, request *http.Request) error
 
 type Url struct {

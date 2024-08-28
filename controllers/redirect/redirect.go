@@ -28,7 +28,8 @@ func RedirController(_ *controllers.ControllerContext) http.HandlerFunc {
 			return
 		}
 
-		pgDriver := db.PsqlDataBase{DbParams: pgDbConfig}
+		//pgDriver := db.PsqlDataBase{DbParams: pgDbConfig}
+		pgDriver := db.NewPsqlDataBase(pgDbConfig)
 
 		dbConn, conErr := pgDriver.Connection()
 		if conErr != nil {
@@ -51,12 +52,13 @@ func RedirController(_ *controllers.ControllerContext) http.HandlerFunc {
 			slog.Info("RedirController found the url", "hash", hash, "short_url_len", len(url.ShortUrl), "long_url_len", len(url.LongUrl))
 		}
 
-		curr := db.GormDB{
-			Gorm: dbConn,
-		}
+		//curr := db.GormDB{
+		//	Gorm: dbConn,
+		//}
 
 		// TODO: It is rare to Close a DB, as the DB handle is meant to be long-lived and shared between many goroutines. It makes sense to close the connection once one user session ends or expires?
-		genDB, genErr := curr.GenDB()
+		//genDB, genErr := curr.GenDB()
+		genDB, genErr := db.NewGormDB(dbConn).GenDB()
 		if genErr != nil {
 			slog.Error("Unable to generate the generic database instance", "genErr", genErr)
 			http.Error(writer, "Unable to generate the generic database instance", http.StatusInternalServerError)

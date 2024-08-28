@@ -8,7 +8,7 @@ import (
 	model "url-shortner/model/type"
 )
 
-func (p PsqlDataBase) Connection() (*gorm.DB, error) {
+func (p *PsqlDataBase) Connection() (*gorm.DB, error) {
 	var interpolator model.StringLiteral = util.StringInterpolator{}
 
 	dsn := interpolator.Interpolate("user=${DB_USERNAME} password=${DB_PASSWORD} dbname=${DB_NAME} host=${DB_HOST} port=${DB_PORT} sslmode=disable",
@@ -28,7 +28,7 @@ func (p PsqlDataBase) Connection() (*gorm.DB, error) {
 	return db, nil
 }
 
-func (g GormDB) GenDB() (*sql.DB, error) {
+func (g *GormDB) GenDB() (*sql.DB, error) {
 	w, err := g.Gorm.DB()
 	if err != nil {
 		return nil, err

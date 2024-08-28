@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"errors"
+	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
 	"github.com/markbates/goth/gothic"
 	uuid "github.com/satori/go.uuid"
@@ -63,5 +64,18 @@ func ProtectedResourceMiddleware(next http.Handler) http.Handler {
 			return
 		}
 		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func RejectAuthPrefixMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		slog.Info("RejectAuthPrefixMiddleware", "red_id", r.Context().Value("req_id"))
+		hash := chi.URLParam(r, "hash")
+		if len(hash) >= 4 && hash[0:4] == "auth" {
+			http.Error(w, "Not a valid short URL", http.StatusNotFound)
+			return
+		}
+		slog.Info("RejectAuthPrefixMiddleware", "red_id", r.Context().Value("req_id"), "valid_hash", hash)
+		next.ServeHTTP(w, r)
 	})
 }
