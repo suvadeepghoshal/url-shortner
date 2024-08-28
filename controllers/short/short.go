@@ -37,17 +37,9 @@ func UrlController(ctx *controllers.ControllerContext) http.HandlerFunc {
 
 		longUrl := input.LongUrl
 
-		pgDbConfig, configErr := db.LoadPgDbConfig()
-		if configErr != nil {
-			slog.Error("Unable to load pgDbConfig", "configErr", configErr)
-			http.Error(writer, configErr.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		pgDriver := db.NewPsqlDataBase(pgDbConfig)
-		dbConn, conErr := pgDriver.Connection()
-		if conErr != nil {
-			slog.Error("Unable to connect to the database: ", "err", conErr.Error())
+		conn, connErr := db.NewPgDriver().GetConnection()
+		if connErr != nil {
+			slog.Error("Unable to connect to the database: ", "err", connErr.Error())
 			http.Error(writer, "Unable to connect to the database", http.StatusInternalServerError)
 			return
 		}
@@ -63,7 +55,7 @@ func UrlController(ctx *controllers.ControllerContext) http.HandlerFunc {
 
 		reqObj := TYPE.Url{ShortUrl: shortUrl[0:7], LongUrl: longUrl}
 
-		result := dbConn.Create(&reqObj)
+		result := conn.Create(&reqObj)
 		if result.Error != nil {
 			slog.Error("Unable to store url data in DB", "err", result.Error.Error())
 			if strings.Contains(result.Error.Error(), "duplicate key value violates") {
@@ -76,22 +68,6 @@ func UrlController(ctx *controllers.ControllerContext) http.HandlerFunc {
 
 		if result.RowsAffected > 0 {
 			slog.Info("Url data is stored in the DB")
-		}
-
-		//curr := db.GormDB{
-		//	Gorm: dbConn,
-		//}
-
-		// TODO: It is rare to Close a DB, as the DB handle is meant to be long-lived and shared between many goroutines. It makes sense to close the connection once one user session ends or expires?
-		genDB, genErr := db.NewGormDB(dbConn).GenDB()
-		if genErr != nil {
-			slog.Error("Unable to generate the generic database instance", "genErr", genErr)
-			http.Error(writer, "Unable to generate the generic database instance", http.StatusInternalServerError)
-			return
-		}
-
-		if util.CloseDbConnection(writer, genDB) {
-			return
 		}
 
 		parsedShortUrl, parseErr := util.ParseShortUrl(longUrl, shortUrl, request)

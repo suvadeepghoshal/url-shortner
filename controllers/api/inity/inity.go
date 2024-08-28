@@ -23,26 +23,17 @@ func InitController(_ *controllers.ControllerContext) http.HandlerFunc {
 			Time: time.Now(),
 		}
 
-		pgDbConfig, configErr := db.LoadPgDbConfig()
-		if configErr != nil {
-			slog.Error("Unable to load pgDbConfig", "configErr", configErr)
-			http.Error(writer, configErr.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		pgDriver := db.PsqlDataBase{DbParams: pgDbConfig}
-
-		dbConn, conErr := pgDriver.Connection()
-		if conErr != nil {
-			slog.Error("Unable to connect to the database: ", "err", conErr.Error())
+		conn, connErr := db.NewPgDriver().GetConnection()
+		if connErr != nil {
+			slog.Error("Unable to connect to the database: ", "err", connErr.Error())
 			http.Error(writer, "Unable to connect to the database", http.StatusInternalServerError)
 			return
 		}
 
 		// Seeding Database at init
-		// TODO: may be seed only if tables are not found
-		if !dbConn.Migrator().HasTable(&TYPE.Url{}) {
-			if migErr := dbConn.AutoMigrate(&TYPE.Url{}); migErr != nil {
+		// HasTable() will work for this application, but is it an ideal way?
+		if !conn.Migrator().HasTable(&TYPE.Url{}) {
+			if migErr := conn.AutoMigrate(&TYPE.Url{}); migErr != nil {
 				slog.Error("Unable to seed the database: ", "err", migErr.Error())
 				http.Error(writer, "Unable to seed the database", http.StatusInternalServerError)
 				return
@@ -51,22 +42,6 @@ func InitController(_ *controllers.ControllerContext) http.HandlerFunc {
 			}
 		} else {
 			slog.Info("Database Migration already exists")
-		}
-
-		curr := db.GormDB{
-			Gorm: dbConn,
-		}
-
-		// TODO: It is rare to Close a DB, as the DB handle is meant to be long-lived and shared between many goroutines. It makes sense to close the connection once one user session ends or expires?
-		genDB, genErr := curr.GenDB()
-		if genErr != nil {
-			slog.Error("Unable to generate the generic database instance", "genErr", genErr)
-			http.Error(writer, "Unable to generate the generic database instance", http.StatusInternalServerError)
-			return
-		}
-
-		if util.CloseDbConnection(writer, genDB) {
-			return
 		}
 
 		secret, e := util.GenerateSessionSecret(32)

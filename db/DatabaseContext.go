@@ -1,49 +1,46 @@
 package db
 
 import (
-	"database/sql"
+	"fmt"
 	"github.com/joho/godotenv"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"log/slog"
 	"os"
 	model "url-shortner/model/type"
 )
 
-type DBDriver interface {
-	Connection() (*gorm.DB, error)
-	GenDB() (*sql.DB, error)
+type Driver interface {
+	GetConnection() (*gorm.DB, error)
 }
 
-type PsqlDataBase struct {
-	DbParams model.DbParams
+type PgDriver struct {
+	config model.DbParams
 }
 
-// GormDB this type helps to create a SQL DB (https://pkg.go.dev/database/sql#DB) instance from an active gorm DB instance
-type GormDB struct {
-	Gorm *gorm.DB
+func (d *PgDriver) GetConnection() (*gorm.DB, error) {
+	dsn := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%s sslmode=disable", d.config.DbUsername, d.config.DbPassword, d.config.DbName, d.config.DbHost, d.config.DbPort)
+
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		return nil, err
+	}
+
+	return db, nil
 }
 
-func NewGormDB(gdb *gorm.DB) *GormDB {
-	return &GormDB{gdb}
-}
-
-func NewPsqlDataBase(dbp model.DbParams) *PsqlDataBase {
-	return &PsqlDataBase{dbp}
-}
-
-// LoadPgDbConfig Load multiple DB configs based on requirements
-func LoadPgDbConfig() (model.DbParams, error) {
-	// TODO: check if we can get the godotenv as a shared state available globally
+func NewPgDriver() *PgDriver {
 	envErr := godotenv.Load(".env")
 	if envErr != nil {
 		slog.Error("Error loading env file", "err", envErr)
-		return model.DbParams{}, envErr
+		return &PgDriver{}
 	}
 
-	return model.DbParams{
+	return &PgDriver{config: model.DbParams{
 		DbName:     os.Getenv("DB_NAME"),
 		DbUsername: os.Getenv("DB_USERNAME"),
 		DbPassword: os.Getenv("DB_PASSWORD"),
 		DbHost:     os.Getenv("DB_HOST"),
-		DbPort:     os.Getenv("DB_PORT")}, nil
+		DbPort:     os.Getenv("DB_PORT"),
+	}}
 }

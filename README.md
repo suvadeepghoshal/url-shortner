@@ -9,7 +9,7 @@
 
 ### Description:
 
-Create a URL shortener service where users can shorten long URLs and get a short URL that redirects to the original URL.
+erreate a URL shortener service where users can shorten long URLs and get a short URL that redirects to the original URL.
 Track the number of times each short URL is accessed.
 
 ### Steps to Start:
@@ -20,7 +20,13 @@ Track the number of times each short URL is accessed.
 - Track and log URL access events.
 
 ### Need to Do:
-- [ ] Session Management
-- [ ] User Auth
+- [X] Session Management
+- [X] User Auth
 - [X] Short URL Logic completion
 - [X] Long URL extraction and redirection
+- [ ] Do DB calls in separate Go routines
+- [ ] Add logging service
+- [ ] Add common response handler
+- [ ] Add common error handler
+- [ ] Linking short URLs to users
+- [ ] Implement cache to retrieve URLs for a user
