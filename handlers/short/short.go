@@ -6,13 +6,13 @@ import (
 	"net/http"
 	"strings"
 	"time"
-	"url-shortner/controllers"
-	"url-shortner/controllers/util"
 	"url-shortner/db"
+	"url-shortner/handlers"
+	"url-shortner/handlers/util"
 	TYPE "url-shortner/model/type"
 )
 
-func UrlController(ctx *controllers.ControllerContext) http.HandlerFunc {
+func UrlController(ctx *handlers.ControllerContext) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		slog.Info("UrlController", "reqId", request.Context().Value("req_id"))
 

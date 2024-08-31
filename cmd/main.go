@@ -8,11 +8,11 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-	"url-shortner/controllers"
-	"url-shortner/controllers/api/inity"
-	"url-shortner/controllers/auth/provider/google_prov"
-	"url-shortner/controllers/redirect"
-	"url-shortner/controllers/short"
+	"url-shortner/handlers"
+	"url-shortner/handlers/api/inity"
+	"url-shortner/handlers/auth/provider/google_prov"
+	"url-shortner/handlers/redirect"
+	"url-shortner/handlers/short"
 )
 
 func main() {
@@ -30,7 +30,7 @@ func main() {
 	}
 
 	// Initialize Contexts required by the Controllers
-	ctx := &controllers.ControllerContext{
+	ctx := &handlers.ControllerContext{
 		Validator: validate,
 	}
 
@@ -45,8 +45,8 @@ func main() {
 	router.Get("/", inity.InitController(ctx))
 	router.Get("/auth", google_prov.HandleGoogleAuth)
 	router.Get("/auth/callback", google_prov.HandleGoogleAuthCallBack)
-	router.With(controllers.ProtectedResourceMiddleware).Post("/url/short", short.UrlController(ctx))
-	router.With(controllers.ProtectedResourceMiddleware).With(controllers.RejectAuthPrefixMiddleware).Get("/{hash}", redirect.RedirController(ctx))
+	router.With(handlers.ProtectedResourceMiddleware).Post("/url/short", short.UrlController(ctx))
+	router.With(handlers.ProtectedResourceMiddleware).With(handlers.RejectAuthPrefixMiddleware).Get("/{hash}", redirect.RedirController(ctx))
 
 	err := http.ListenAndServe(os.Getenv("APP_PORT"), router)
 	if err != nil {

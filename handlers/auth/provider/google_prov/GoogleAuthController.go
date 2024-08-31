@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-	"url-shortner/controllers/util"
+	"url-shortner/handlers/util"
 	model "url-shortner/model/type"
 
 	"github.com/joho/godotenv"

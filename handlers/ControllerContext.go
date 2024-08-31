@@ -1,4 +1,4 @@
-package controllers
+package handlers
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 	"net/http"
 )
 
-// ControllerContext Passing the validator instance to all the controllers, so that only one reference of the validator is created and can be used all the time
+// ControllerContext Passing the validator instance to all the handlers, so that only one reference of the validator is created and can be used all the time
 type ControllerContext struct {
 	Validator *validator.Validate
 }
@@ -71,6 +71,7 @@ func RejectAuthPrefixMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		slog.Info("RejectAuthPrefixMiddleware", "red_id", r.Context().Value("req_id"))
 		hash := chi.URLParam(r, "hash")
+		//favicon.ico -> need to handle this also?
 		if len(hash) >= 4 && hash[0:4] == "auth" {
 			http.Error(w, "Not a valid short URL", http.StatusNotFound)
 			return

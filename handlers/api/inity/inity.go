@@ -6,9 +6,9 @@ import (
 	"log/slog"
 	"net/http"
 	"time"
-	"url-shortner/controllers"
-	"url-shortner/controllers/util"
 	"url-shortner/db"
+	"url-shortner/handlers"
+	"url-shortner/handlers/util"
 	TYPE "url-shortner/model/type"
 
 	"github.com/gorilla/sessions"
@@ -16,7 +16,7 @@ import (
 	"github.com/markbates/goth/gothic"
 )
 
-func InitController(_ *controllers.ControllerContext) http.HandlerFunc {
+func InitController(_ *handlers.ControllerContext) http.HandlerFunc {
 	return func(writer http.ResponseWriter, _ *http.Request) {
 		slog.Info("inside InitController")
 		commonResponse := TYPE.CommonResponse{
