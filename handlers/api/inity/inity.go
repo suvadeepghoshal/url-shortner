@@ -19,9 +19,6 @@ import (
 func InitController(_ *handlers.ControllerContext) http.HandlerFunc {
 	return func(writer http.ResponseWriter, _ *http.Request) {
 		slog.Info("inside InitController")
-		commonResponse := TYPE.CommonResponse{
-			Time: time.Now(),
-		}
 
 		conn, connErr := db.NewPgDriver().GetConnection()
 		if connErr != nil {
@@ -66,7 +63,7 @@ func InitController(_ *handlers.ControllerContext) http.HandlerFunc {
 
 		writer.Header().Set("Content-Type", "application/json")
 		writer.WriteHeader(http.StatusOK)
-		err := json.NewEncoder(writer).Encode(commonResponse)
+		err := json.NewEncoder(writer).Encode("Application init is successful")
 		if err != nil {
 			slog.Error("Unable to write response: ", "err", err.Error())
 			http.Error(writer, "Unable to write response", http.StatusInternalServerError)

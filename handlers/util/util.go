@@ -45,15 +45,14 @@ func GetCurrDomain(r *http.Request) string {
 	return fmt.Sprintf("%s://%s", scheme, host)
 }
 
-func ParseShortUrl(l, s string, request *http.Request) (string, error) {
-	hostname := GetCurrDomain(request)
+func ParseShortUrl(s, hostname string) string {
 	slog.Debug("ParseShortController", "hostname", hostname)
 	slog.Debug("ParseShortController", "short_url", s)
 
 	returnStr := fmt.Sprintf("%s/%s", hostname, s)
 
 	slog.Debug("ParseShortUrl", "return_str", returnStr)
-	return returnStr, nil
+	return returnStr
 }
 
 func GenerateSessionSecret(length int) (string, error) {

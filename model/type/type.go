@@ -5,11 +5,6 @@ import (
 	"time"
 )
 
-type CommonResponse struct {
-	Time      time.Time    `json:"time"`
-	UrlParams UrlParameter `json:"urlParams"`
-}
-
 type UrlParameter struct {
 	ShortUrl string `json:"short_url"`
 	LongUrl  string `json:"long_url" validate:"required,url"`

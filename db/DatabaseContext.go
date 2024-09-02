@@ -21,7 +21,7 @@ type PgDriver struct {
 func (d *PgDriver) GetConnection() (*gorm.DB, error) {
 	dsn := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%s sslmode=disable", d.config.DbUsername, d.config.DbPassword, d.config.DbName, d.config.DbHost, d.config.DbPort)
 
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{TranslateError: true})
 	if err != nil {
 		return nil, err
 	}
