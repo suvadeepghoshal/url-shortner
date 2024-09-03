@@ -3,7 +3,9 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
+	"time"
 	"url-shortner/handlers/util"
 	TYPE "url-shortner/model/type"
 	"url-shortner/repository"
@@ -45,8 +47,15 @@ func (s *UrlService) MakeShortUrl(ctx context.Context, url *TYPE.Url) error {
 	})
 }
 
-func (s *UrlService) GetLongUrl(ctx context.Context, url *TYPE.Url) error {
-	return s.Repo.Transaction(ctx, func(repo repository.Repository) error {
+func (s *UrlService) GetLongUrl(c context.Context, url *TYPE.Url) error {
+	ch := make(chan error, 1)
+	ctx, cancel := context.WithTimeout(c, time.Millisecond*100) // 10 seconds to perform the DB transaction
+	defer cancel()
+
+	start := time.Now()
+
+	go s.Repo.TransactionTemp(ctx, ch, func(repo repository.Repository) error {
+		// Do something
 		if err := repo.Query(ctx, &url); err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return errors.New("url not found")
@@ -60,7 +69,16 @@ func (s *UrlService) GetLongUrl(ctx context.Context, url *TYPE.Url) error {
 		if len(url.LongUrl) == 0 {
 			return errors.New("requested url is empty")
 		}
-
 		return nil
 	})
+
+	select {
+	case <-ctx.Done():
+		return fmt.Errorf("the connection timed out as it took %s", time.Since(start))
+	case result := <-ch:
+		if result != nil {
+			return result
+		}
+	}
+	return nil
 }

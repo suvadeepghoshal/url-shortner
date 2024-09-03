@@ -24,7 +24,7 @@ Track the number of times each short URL is accessed.
 - [X] User Auth
 - [X] Short URL Logic completion
 - [X] Long URL extraction and redirection
-- [ ] Do DB calls in separate Go routines
+- [ ] Do DB calls with timeout context 
 - [ ] Add logging service
 - [ ] Add common response handler
 - [ ] Add common error handler
