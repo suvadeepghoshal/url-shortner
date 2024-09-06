@@ -20,8 +20,14 @@ type UrlService struct {
 // TODO: who should take care of the go routines?
 // Ideally the service to repo transaction should be wrapped in a go routine
 
-func (s *UrlService) MakeShortUrl(ctx context.Context, url *TYPE.Url) error {
-	return s.Repo.Transaction(ctx, func(repo repository.Repository) error {
+func (s *UrlService) MakeShortUrl(c context.Context, url *TYPE.Url) error {
+	ch := make(chan error, 1)
+	ctx, cancel := context.WithTimeout(c, time.Millisecond*100) // 100 mili-seconds to perform the DB transaction
+	defer cancel()
+
+	start := time.Now()
+
+	go s.Repo.Transaction(ctx, ch, func(repo repository.Repository) error {
 		short, e := util.CreateMd5Hash(url.LongUrl)
 		if e != nil {
 			return e
@@ -45,17 +51,28 @@ func (s *UrlService) MakeShortUrl(ctx context.Context, url *TYPE.Url) error {
 
 		return nil
 	})
+
+	select {
+	case <-ctx.Done():
+		return fmt.Errorf("the connection timed out as it took %s", time.Since(start))
+	case result := <-ch:
+		if result != nil {
+			return result
+		}
+	}
+	return nil
 }
 
 func (s *UrlService) GetLongUrl(c context.Context, url *TYPE.Url) error {
 	ch := make(chan error, 1)
-	ctx, cancel := context.WithTimeout(c, time.Millisecond*100) // 10 seconds to perform the DB transaction
+	ctx, cancel := context.WithTimeout(c, time.Millisecond*100) // 100 mili-seconds to perform the DB transaction
 	defer cancel()
 
-	start := time.Now()
+	// start := time.Now()
 
-	go s.Repo.TransactionTemp(ctx, ch, func(repo repository.Repository) error {
-		// Do something
+	go s.Repo.Transaction(ctx, ch, func(repo repository.Repository) error {
+		time.Sleep(time.Second * 2)
+
 		if err := repo.Query(ctx, &url); err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return errors.New("url not found")
@@ -72,9 +89,27 @@ func (s *UrlService) GetLongUrl(c context.Context, url *TYPE.Url) error {
 		return nil
 	})
 
-	select {
+	/* select {
 	case <-ctx.Done():
 		return fmt.Errorf("the connection timed out as it took %s", time.Since(start))
+	case result := <-ch:
+		if result != nil {
+			return result
+		}
+	} */
+
+	handleChannelResponse(ctx, ch)
+
+	return nil
+}
+
+// TODO: need to find out how the deadline works
+func handleChannelResponse(ctx context.Context, ch chan error) error {
+	select {
+	case <-ctx.Done():
+		deadline, ok := ctx.Deadline()
+		slog.Debug("handleChannelResponse", "ok", ok)
+		return fmt.Errorf("the connection timed out as it took %s", deadline)
 	case result := <-ch:
 		if result != nil {
 			return result

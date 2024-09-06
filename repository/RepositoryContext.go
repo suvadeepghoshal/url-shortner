@@ -10,8 +10,7 @@ import (
 type Repository interface {
 	Create(ctx context.Context, entity interface{}) error
 	Query(ctx context.Context, entity interface{}) error
-	Transaction(ctx context.Context, fn func(repo Repository) error) error
-	TransactionTemp(ctx context.Context, ch chan error, fn func(repo Repository) error)
+	Transaction(ctx context.Context, ch chan error, fn func(repo Repository) error)
 }
 
 type RepoService struct {
@@ -35,26 +34,7 @@ func (r *RepoService) RepoTxn(tx *gorm.DB) Repository {
 	}
 }
 
-func (r *RepoService) Transaction(ctx context.Context, fn func(repo Repository) error) error {
-	slog.Info("Transaction for", "req_id", ctx.Value("req_id"))
-	tx := r.Db.Begin() // beginning a database transaction
-
-	if err := tx.Error; err != nil {
-		return tx.Error
-	}
-
-	repo := r.RepoTxn(tx) // creating a new repo with the existing transaction
-
-	err := fn(repo) // Performing requested DB transaction
-	if err != nil {
-		tx.Rollback() // Rollback rollbacks the changes in a transaction
-		return err
-	}
-
-	return tx.Commit().Error // Commit commits the changes in a transaction
-}
-
-func (r *RepoService) TransactionTemp(ctx context.Context, ch chan error, fn func(repo Repository) error) {
+func (r *RepoService) Transaction(ctx context.Context, ch chan error, fn func(repo Repository) error) {
 	slog.Info("Transaction for", "req_id", ctx.Value("req_id"))
 	tx := r.Db.Begin() // beginning a database transaction
 
